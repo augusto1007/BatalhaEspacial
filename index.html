@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#02090d">
+<title>Batalha Espacial</title>
+<meta name="description" content="Batalha naval no espaço, um contra um, direto do navegador. Crie uma sala e mande o link para um amigo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fonte:"Chakra Petch",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --espaco:#02090d;--painel:rgba(3,14,18,.86);--linha:rgba(110,240,225,.24);--linha-forte:rgba(110,240,225,.5);
+  --ciano:#46f3df;--ciano-esc:#0f5f58;--ambar:#ffb347;--perigo:#ff4d5e;
+  --texto:#e6fffb;--suave:#8db5b0;--tinta:#03201d;--agua:rgba(70,243,223,.05);
+  color-scheme:dark;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--espaco:#02090d;--texto:#e6fffb;--suave:#8db5b0}}
+:root[data-theme="dark"]{--espaco:#02090d;--texto:#e6fffb;--suave:#8db5b0}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;min-height:100%}
+body{background:var(--espaco);color:var(--texto);font-family:var(--fonte);-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  background-image:radial-gradient(ellipse 80% 50% at 85% 0%,rgba(98,60,160,.28),transparent 70%),radial-gradient(ellipse 70% 50% at 0% 100%,rgba(15,95,88,.35),transparent 70%)}
+#ceu{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+button,input{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ciano);outline-offset:3px}
+[hidden]{display:none!important}
+
+#app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:16px 14px 46px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.topo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.marca-jogo{font-weight:700;font-size:17px;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.no-menu .marca-jogo{visibility:hidden}
+.marca-jogo svg{width:22px;height:22px;color:var(--ciano);filter:drop-shadow(0 0 6px rgba(70,243,223,.6))}
+.icone{width:40px;height:40px;border-radius:10px;border:1px solid var(--linha);background:rgba(3,14,18,.7);display:grid;place-items:center;cursor:pointer;padding:0}
+.icone:hover{border-color:var(--ciano)}
+.icone svg{width:20px;height:20px}
+main{flex:1;display:flex;flex-direction:column}
+.tela{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center}
+
+/* ---------- Menu ---------- */
+h1{margin:clamp(12px,5vh,48px) 0 10px;font-size:clamp(40px,10vw,76px);line-height:.95;font-weight:700;text-shadow:0 0 30px rgba(70,243,223,.45)}
+h1 span{display:block;color:var(--ciano)}
+h2{margin:0 0 6px;font-size:clamp(26px,6vw,38px);line-height:1.05}
+.lead{margin:0 auto 26px;max-width:40ch;font-size:17px;line-height:1.5;color:#b7d6d1}
+.sub{margin:0 0 18px;color:#b7d6d1;font-size:16px;line-height:1.45;max-width:44ch}
+.cartao{width:100%;max-width:420px;background:var(--painel);border:1px solid var(--linha);border-radius:18px;padding:20px;text-align:left}
+.cartao+.cartao{margin-top:14px}
+.campo{display:block;font-size:14px;color:var(--suave);margin-bottom:6px}
+.entrada{width:100%;font-size:18px;font-weight:600;padding:12px 14px;border-radius:12px;border:1px solid var(--linha);background:rgba(2,9,13,.8);outline:none}
+.entrada:focus{border-color:var(--ciano);box-shadow:0 0 0 3px rgba(70,243,223,.15)}
+.entrada.codigo{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-size:22px}
+.linha{display:flex;gap:10px;margin-top:12px}
+.linha .entrada{flex:1;min-width:0}
+.primario{background:var(--ciano);color:var(--tinta);border:0;padding:13px 24px;border-radius:999px;font-weight:700;font-size:17px;cursor:pointer;box-shadow:0 0 24px rgba(70,243,223,.38);transition:transform .15s,box-shadow .15s}
+.primario:hover{transform:scale(1.03);box-shadow:0 0 32px rgba(70,243,223,.6)}
+.primario:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.primario.largo{width:100%;margin-top:14px}
+.secundario{background:none;border:1px solid var(--linha-forte);padding:11px 20px;border-radius:999px;cursor:pointer;font-weight:600;font-size:15px}
+.secundario:hover{border-color:var(--ciano)}
+.secundario:disabled{opacity:.45;cursor:not-allowed}
+.convite{margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,179,71,.5);background:rgba(255,179,71,.08);color:var(--ambar);font-size:15px}
+details.regras{width:100%;max-width:420px;margin-top:14px;text-align:left;border:1px solid var(--linha);border-radius:14px;background:rgba(3,14,18,.6)}
+details.regras summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none}
+details.regras summary::-webkit-details-marker{display:none}
+details.regras summary::after{content:"+";float:right;color:var(--ciano)}
+details.regras[open] summary::after{content:"–"}
+details.regras ul{margin:0;padding:0 16px 14px 34px;color:#b7d6d1;font-size:14px;line-height:1.55}
+
+/* ---------- Sala de espera ---------- */
+.codigo-grande{font-size:clamp(44px,13vw,72px);font-weight:700;letter-spacing:.18em;margin:8px 0 2px;padding-left:.18em;color:var(--ciano);text-shadow:0 0 26px rgba(70,243,223,.55)}
+.link-sala{font-size:14px;color:var(--suave);word-break:break-all;margin-bottom:16px}
+.botoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.radar{position:relative;width:120px;height:120px;margin:26px auto 12px;border-radius:50%;border:1px solid var(--linha-forte);
+  background:radial-gradient(circle,transparent 32%,rgba(70,243,223,.12) 33%,transparent 34%,transparent 64%,rgba(70,243,223,.12) 65%,transparent 66%)}
+.radar::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(70,243,223,.55),transparent 22%);animation:gira 2.2s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.espera-txt{color:var(--suave);font-size:15px}
+
+/* ---------- Tabuleiros ---------- */
+.tabuleiro{--t:min(92vw,440px);width:var(--t);display:grid;grid-template-columns:calc(var(--t)*.07) repeat(10,minmax(0,1fr));grid-auto-rows:auto;gap:2px;user-select:none;-webkit-user-select:none}
+.tabuleiro .rot{display:grid;place-items:center;font-size:calc(var(--t)*.03);color:var(--suave);aspect-ratio:1}
+.tabuleiro .rot.col{aspect-ratio:auto;padding-bottom:2px}
+.cel{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:3px;background:var(--agua);box-shadow:inset 0 0 0 1px rgba(110,240,225,.12);cursor:default}
+.alvo .cel{cursor:crosshair}
+.alvo.minha-vez .cel:not(.agua):not(.fogo):not(.afund):hover{background:rgba(70,243,223,.18);box-shadow:inset 0 0 0 1px var(--ciano)}
+.alvo:not(.minha-vez){opacity:.82}
+/* Naves (segmentos) */
+.cel.nav::before{content:"";position:absolute;inset:16% 0;background:linear-gradient(180deg,#bffcf4,#46f3df 45%,#12867b);box-shadow:0 0 8px rgba(70,243,223,.5)}
+.cel.nav.v::before{inset:0 16%;background:linear-gradient(90deg,#bffcf4,#46f3df 45%,#12867b)}
+.cel.nav.h.ini::before{left:12%;border-radius:999px 0 0 999px}
+.cel.nav.h.fim::before{right:4%;clip-path:polygon(0 0,70% 0,100% 50%,70% 100%,0 100%)}
+.cel.nav.v.ini::before{top:4%;clip-path:polygon(50% 0,100% 30%,100% 100%,0 100%,0 30%)}
+.cel.nav.v.fim::before{bottom:12%;border-radius:0 0 999px 999px}
+.cel.nav.rev::before{background:repeating-linear-gradient(45deg,rgba(255,179,71,.55) 0 3px,rgba(255,179,71,.2) 3px 6px);box-shadow:none}
+.cel.nav.afund::before{background:linear-gradient(180deg,#5a1f27,#ff4d5e 50%,#5a1f27);box-shadow:0 0 10px rgba(255,77,94,.6)}
+.cel.nav.v.afund::before{background:linear-gradient(90deg,#5a1f27,#ff4d5e 50%,#5a1f27)}
+.cel.prev.ok{background:rgba(70,243,223,.3);box-shadow:inset 0 0 0 1px var(--ciano)}
+.cel.prev.ruim{background:rgba(255,77,94,.3);box-shadow:inset 0 0 0 1px var(--perigo)}
+/* Tiros */
+.cel.agua::after{content:"";position:absolute;left:50%;top:50%;width:26%;height:26%;transform:translate(-50%,-50%);border-radius:50%;border:2px solid rgba(141,181,176,.75)}
+.cel.fogo::after,.cel.afund::after{content:"";position:absolute;inset:18%;background:radial-gradient(circle,#fff6d8 0 18%,#ffb347 30%,#ff4d5e 60%,transparent 72%);border-radius:50%;filter:drop-shadow(0 0 6px rgba(255,107,74,.9))}
+.cel.fogo{background:rgba(255,77,94,.12)}
+.cel.afund{background:rgba(255,77,94,.2)}
+.cel.mirando{animation:mira .6s ease-in-out infinite alternate;background:rgba(255,179,71,.25)}
+@keyframes mira{to{box-shadow:inset 0 0 0 2px var(--ambar)}}
+.cel.novo::after{animation:estoura .45s ease-out}
+@keyframes estoura{from{transform:scale(2.2);opacity:0}}
+.cel.agua.novo::after{animation:onda .5s ease-out}
+@keyframes onda{from{width:90%;height:90%;opacity:0}}
+.tabuleiro.treme{animation:treme .35s}
+@keyframes treme{20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(2px,1px)}}
+
+/* ---------- Posicionamento ---------- */
+.estado-adv{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--suave);margin:0 0 14px}
+.estado-adv i{width:9px;height:9px;border-radius:50%;background:var(--suave)}
+.estado-adv.pronto{color:var(--ciano)}
+.estado-adv.pronto i{background:var(--ciano);box-shadow:0 0 8px var(--ciano)}
+.hangar{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px 0 4px;max-width:460px}
+.hangar button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 12px;border-radius:12px;border:1px solid var(--linha);background:rgba(3,14,18,.7);cursor:pointer;font-size:13px;font-weight:600}
+.hangar button[aria-pressed="true"]{border-color:var(--ciano);background:rgba(70,243,223,.12);box-shadow:0 0 14px rgba(70,243,223,.25)}
+.hangar button.posto{opacity:.4}
+.hangar .blocos{display:flex;gap:2px}
+.hangar .blocos i{width:11px;height:11px;border-radius:2px;background:var(--ciano)}
+.dica{font-size:13px;color:var(--suave);margin:8px 0 14px;max-width:42ch}
+.acoes{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:12px}
+
+/* ---------- Batalha ---------- */
+.placar{display:flex;align-items:center;justify-content:center;gap:12px;font-size:15px;margin-bottom:10px;flex-wrap:wrap}
+.jogador{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--linha);background:rgba(3,14,18,.7);transition:border-color .3s,box-shadow .3s}
+.jogador.vez{border-color:var(--ciano);box-shadow:0 0 16px rgba(70,243,223,.35)}
+.jogador b{max-width:12ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jogador small{color:var(--suave);font-variant-numeric:tabular-nums}
+.versus{color:var(--suave);font-size:13px}
+.turno{font-size:clamp(22px,5.5vw,30px);font-weight:700;margin:2px 0 4px;min-height:1.2em}
+.turno.minha{color:var(--ciano);text-shadow:0 0 18px rgba(70,243,223,.5)}
+.turno.dele{color:var(--suave)}
+.info{font-size:15px;color:#b7d6d1;min-height:1.4em;margin:0 0 12px;max-width:44ch}
+.info.bom{color:var(--ciano)}.info.ruim{color:var(--perigo)}
+.campos{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:18px 28px;width:100%}
+.campo-bat{display:flex;flex-direction:column;align-items:center}
+.campo-bat h3{margin:0 0 8px;font-size:15px;font-weight:600;color:var(--suave)}
+.campo-bat.mini .tabuleiro{--t:min(66vw,280px)}
+@media (min-width:920px){.campo-bat.mini .tabuleiro{--t:min(42vw,440px)}}
+.frota{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;margin-top:8px;font-size:12px;color:var(--suave);max-width:440px}
+.frota span{display:inline-flex;align-items:center;gap:5px}
+.frota .blocos{display:flex;gap:2px}
+.frota .blocos i{width:7px;height:7px;border-radius:1px;background:var(--ciano)}
+.frota .blocos i.x{background:var(--perigo)}
+.frota span.fora{text-decoration:line-through;opacity:.55}
+.frota span.fora .blocos i{background:var(--perigo)}
+.reacoes{display:flex;gap:6px;justify-content:center;margin-top:16px}
+.reacoes button{font-size:22px;width:46px;height:46px;border-radius:12px;border:1px solid var(--linha);background:rgba(3,14,18,.7);cursor:pointer;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.reacoes button:hover{border-color:var(--ciano)}
+.reacoes button:disabled{opacity:.4}
+.painel-fim{margin:0 0 14px;padding:18px;border-radius:18px;border:1px solid var(--linha-forte);background:var(--painel);width:100%;max-width:460px}
+.painel-fim h2.venceu{color:var(--ciano);text-shadow:0 0 24px rgba(70,243,223,.5)}
+.painel-fim h2.perdeu{color:var(--perigo)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--linha);border:1px solid var(--linha);border-radius:12px;overflow:hidden;margin:12px 0 14px}
+.stats div{background:rgba(3,14,18,.95);padding:10px 6px}
+.stats strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--suave)}
+.placar-serie{font-size:14px;color:var(--suave);margin-bottom:12px}
+
+/* ---------- Avisos ---------- */
+#toast{position:fixed;left:50%;bottom:calc(52px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:20;padding:11px 18px;border-radius:12px;background:rgba(3,14,18,.96);border:1px solid var(--linha-forte);font-size:15px;max-width:min(92vw,420px);text-align:center;pointer-events:none;transition:opacity .25s,transform .25s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.ruim{border-color:var(--perigo)}
+.emoji-voa{position:fixed;z-index:21;font-size:46px;pointer-events:none;animation:voa 1.8s ease-out forwards;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+@keyframes voa{0%{transform:translate(-50%,20px) scale(.4);opacity:0}15%{transform:translate(-50%,0) scale(1.15);opacity:1}100%{transform:translate(-50%,-140px) scale(1);opacity:0}}
+.marca{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:5;font-size:11px;letter-spacing:.03em;color:var(--texto);opacity:.4;pointer-events:none;white-space:nowrap;text-shadow:0 0 6px rgba(0,0,0,.8)}
+#marcaInsta{left:12px}
+#marcaVersao{right:12px;font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="ceu" aria-hidden="true"></canvas>
+<div id="app">
+  <header class="topo">
+    <div class="marca-jogo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+      Batalha Espacial
+    </div>
+    <button class="icone" id="bSom" aria-label="Desligar som" aria-pressed="false"></button>
+  </header>
+
+  <main>
+    <!-- Menu -->
+    <section class="tela" id="tMenu">
+      <h1>Batalha <span>Espacial</span></h1>
+      <p class="lead">Esconda sua frota num setor 10×10 e cace as naves do seu amigo antes que ele ache as suas. Um contra um, direto do navegador.</p>
+      <p class="convite" id="convite" hidden></p>
+      <div class="cartao">
+        <label class="campo" for="iNome">Seu nome de piloto</label>
+        <input class="entrada" id="iNome" maxlength="16" autocomplete="nickname" placeholder="Piloto">
+        <button class="primario largo" id="bCriar">Criar sala</button>
+      </div>
+      <div class="cartao">
+        <label class="campo" for="iCodigo">Recebeu um código? Entre na sala do seu amigo</label>
+        <div class="linha">
+          <input class="entrada codigo" id="iCodigo" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="•••••" inputmode="text">
+          <button class="secundario" id="bEntrar">Entrar</button>
+        </div>
+      </div>
+      <details class="regras">
+        <summary>Como jogar</summary>
+        <ul>
+          <li>Crie uma sala e mande o link ou o código para um amigo. Quando ele entrar, a partida começa.</li>
+          <li>Cada um posiciona 5 naves: nave-mãe (5 casas), cruzador (4), destróier (3), fragata (3) e batedor (2). Elas podem ficar na horizontal ou na vertical, sem se sobrepor.</li>
+          <li>Na sua vez, toque numa casa do setor inimigo para disparar. <strong>Acertou, atira de novo.</strong> Errou, passa a vez.</li>
+          <li>Quando todas as casas de uma nave são atingidas, ela é afundada e aparece para os dois.</li>
+          <li>Vence quem afundar a frota inteira do outro primeiro. Depois dá para pedir revanche na mesma sala.</li>
+          <li>A conexão é direta entre os dois aparelhos. Se um de vocês sair do navegador por muito tempo, a conexão pode cair.</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- Sala criada, esperando -->
+    <section class="tela" id="tEspera" hidden>
+      <h2>Sala criada</h2>
+      <p class="sub">Mande o link ou o código para o seu adversário.</p>
+      <div class="codigo-grande" id="codigoSala" aria-live="polite"></div>
+      <div class="link-sala" id="linkSala"></div>
+      <div class="botoes">
+        <button class="primario" id="bCompartilhar">Compartilhar link</button>
+        <button class="secundario" id="bWhats">Enviar no WhatsApp</button>
+        <button class="secundario" id="bCopiar">Copiar link</button>
+      </div>
+      <div class="radar" aria-hidden="true"></div>
+      <p class="espera-txt" id="esperaTxt">Abrindo canal de comunicação…</p>
+      <button class="secundario" id="bCancelar" style="margin-top:14px">Cancelar</button>
+    </section>
+
+    <!-- Conectando a uma sala -->
+    <section class="tela" id="tConectando" hidden>
+      <div class="radar" aria-hidden="true"></div>
+      <h2 id="conTitulo">Conectando…</h2>
+      <p class="sub" id="conTxt"></p>
+      <button class="secundario" id="bCancelar2">Cancelar</button>
+    </section>
+
+    <!-- Posicionamento -->
+    <section class="tela" id="tPos" hidden>
+      <h2>Posicione sua frota</h2>
+      <p class="estado-adv" id="estadoAdv"><i></i><span></span></p>
+      <div class="tabuleiro" id="tabPos" role="grid" aria-label="Seu setor"></div>
+      <div class="hangar" id="hangar" role="group" aria-label="Naves para posicionar"></div>
+      <p class="dica" id="dicaPos">Escolha uma nave e toque no setor para colocá-la. Toque numa nave já posicionada para tirá-la de lugar.</p>
+      <div class="acoes">
+        <button class="secundario" id="bGirar">Girar (horizontal)</button>
+        <button class="secundario" id="bAleatorio">Posição aleatória</button>
+        <button class="secundario" id="bLimpar">Limpar</button>
+      </div>
+      <button class="primario" id="bPronto" disabled>Estou pronto</button>
+    </section>
+
+    <!-- Batalha e fim -->
+    <section class="tela" id="tBatalha" hidden>
+      <div class="placar">
+        <div class="jogador" id="jEu"><b id="nEu"></b><small id="sEu"></small></div>
+        <span class="versus">contra</span>
+        <div class="jogador" id="jAdv"><b id="nAdv"></b><small id="sAdv"></small></div>
+      </div>
+      <div class="painel-fim" id="painelFim" hidden>
+        <h2 id="fimTitulo"></h2>
+        <p class="sub" id="fimSub" style="margin:0 auto"></p>
+        <div class="stats" id="fimStats"></div>
+        <p class="placar-serie" id="placarSerie"></p>
+        <div class="botoes">
+          <button class="primario" id="bRevanche">Pedir revanche</button>
+          <button class="secundario" id="bSair">Sair da sala</button>
+        </div>
+      </div>
+      <div class="turno" id="turno" aria-live="polite"></div>
+      <p class="info" id="info" aria-live="polite"></p>
+      <div class="campos">
+        <div class="campo-bat">
+          <h3 id="tituloAlvo">Setor inimigo</h3>
+          <div class="tabuleiro alvo" id="tabAlvo" role="grid" aria-label="Setor inimigo"></div>
+          <div class="frota" id="frotaAdv" aria-label="Frota inimiga"></div>
+        </div>
+        <div class="campo-bat mini">
+          <h3>Sua frota</h3>
+          <div class="tabuleiro" id="tabMeu" role="grid" aria-label="Sua frota"></div>
+          <div class="frota" id="frotaEu" aria-label="Sua frota"></div>
+        </div>
+      </div>
+      <div class="reacoes" id="reacoes" role="group" aria-label="Reações"></div>
+    </section>
+
+    <!-- Conexão perdida -->
+    <section class="tela" id="tCaiu" hidden>
+      <h2 style="margin-top:12vh">Conexão perdida</h2>
+      <p class="sub" id="caiuTxt"></p>
+      <button class="primario" id="bVoltar">Voltar ao menu</button>
+    </section>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<span class="marca" id="marcaInsta"></span>
+<span class="marca" id="marcaVersao"></span>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+'use strict';
+/* ATENÇÃO: atualize VERSAO sempre que mexer no código!
+   Formato: vMAIOR.MENOR.CORREÇÃO-dev
+   - CORREÇÃO (+1): conserto de bug ou ajuste pequeno (ex.: v0.1.0 -> v0.1.1)
+   - MENOR (+1, zera CORREÇÃO): recurso novo (ex.: v0.1.1 -> v0.2.0)
+   - MAIOR (+1, zera o resto): mudança grande, ou ao sair do desenvolvimento (ex.: v1.0.0, sem o -dev)
+   O valor aparece no canto inferior direito da tela.
+
+   AVISO PARA O CLAUDE (ou qualquer assistente de IA que editar este arquivo):
+   sempre que você alterar QUALQUER parte deste código, atualize VERSAO abaixo
+   seguindo as regras acima, na mesma edição, e informe a nova versão na resposta. */
+const VERSAO='v0.1.0-dev';
+const INSTA='@augustto1007';
+// Versão do protocolo de mensagens. Suba quando mudar o formato das mensagens trocadas entre os jogadores,
+// assim dois aparelhos com versões incompatíveis avisam em vez de travar.
+const PROTO=1;
+// Prefixo dos IDs no servidor público do PeerJS, para não colidir com salas de outros sites.
+const PREFIXO='bespacial-aug1007-';
+const ALFA='ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // sem 0/O, 1/I/L
+const N=10,LETRAS='ABCDEFGHIJ';
+const FROTA=[
+  {id:'mae',nome:'Nave-mãe',t:5},
+  {id:'cru',nome:'Cruzador',t:4},
+  {id:'des',nome:'Destróier',t:3},
+  {id:'fra',nome:'Fragata',t:3},
+  {id:'bat',nome:'Batedor',t:2},
+];
+const NOME_DE=Object.fromEntries(FROTA.map(f=>[f.id,f.nome]));
+const REACOES=['👏','😂','😱','🔥','😤'];
+const $=id=>document.getElementById(id);
+const coord=(x,y)=>`${LETRAS[y]}${x+1}`;
+const TOQUE=matchMedia('(pointer:coarse)').matches;
+
+/* ---------- Estado ---------- */
+let peer=null,conn=null,souHost=false,codigo='',nome='',nomeAdv='Adversário';
+let fase='menu';            // menu | espera | conectando | posicionar | batalha | fim | caiu
+let euPronto=false,advPronto=false,meuTurno=false,aguardando=false;
+let primeiroProx=null;      // só o anfitrião usa: quem começa a próxima partida
+let revEu=false,revAdv=false,vitorias=0,derrotas=0;
+let ultimaMsg=0,timerCon=null,mudo=false,ultimaReacao=0;
+let minha,inim,sel=0,horiz=true,stats;
+
+function novoEstado(manterPosicoes){
+  const ant=minha&&manterPosicoes?minha.navios:null;
+  minha={
+    navios:FROTA.map((f,i)=>{const a=ant&&ant[i];return{...f,x:a?a.x:-1,y:a?a.y:-1,h:a?a.h:true,pos:!!(a&&a.pos),acertos:0}}),
+    rec:Array.from({length:N},()=>Array(N).fill(0))   // tiros recebidos: 0 nada, 1 água, 2 acerto
+  };
+  inim={
+    tiros:Array.from({length:N},()=>Array(N).fill(0)), // meus tiros: 0 nada, 1 água, 2 acerto, 3 afundado
+    afundados:[],revelado:null
+  };
+  stats={tiros:0,acertos:0,maiorSeq:0,seq:0};
+  sel=minha.navios.findIndex(n=>!n.pos);if(sel<0)sel=null;
+  euPronto=advPronto=aguardando=false;revEu=revAdv=false;
+}
+const celulas=n=>Array.from({length:n.t},(_,i)=>n.h?[n.x+i,n.y]:[n.x,n.y+i]);
+function grade(navios,ignorar=-1){
+  const g=Array.from({length:N},()=>Array(N).fill(-1));
+  navios.forEach((n,i)=>{if(n.pos&&i!==ignorar)for(const[x,y]of celulas(n))g[y][x]=i});
+  return g;
+}
+function cabe(navios,i,x,y,h){
+  const t=navios[i].t,g=grade(navios,i);
+  for(let k=0;k<t;k++){const cx=h?x+k:x,cy=h?y:y+k;if(cx<0||cy<0||cx>=N||cy>=N||g[cy][cx]>=0)return false}
+  return true;
+}
+
+/* ---------- Céu de fundo ---------- */
+function pintaCeu(){
+  const c=$('ceu'),d=Math.min(2,devicePixelRatio||1),w=innerWidth,h=innerHeight;
+  c.width=w*d;c.height=h*d;const g=c.getContext('2d');g.scale(d,d);
+  const n=Math.round(w*h/2600);
+  for(let i=0;i<n;i++){const z=Math.random();g.globalAlpha=.15+.7*z;g.fillStyle=Math.random()<.2?'#9ff7ee':'#fff';const s=z*1.6+.4;g.fillRect(Math.random()*w,Math.random()*h,s,s)}
+}
+
+/* ---------- Som ---------- */
+let AC=null;
+function audio(){if(mudo)return null;try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){AC=null}return AC}
+function tom(f0,f1,dur,tipo='sine',vol=.15,atraso=0){
+  const a=audio();if(!a)return;const t=a.currentTime+atraso,o=a.createOscillator(),g=a.createGain();
+  o.type=tipo;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.02);
+}
+function ruido(dur,vol=.3,freq=900,atraso=0){
+  const a=audio();if(!a)return;const t=a.currentTime+atraso,len=Math.floor(a.sampleRate*dur),b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
+  const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;f.type='lowpass';f.frequency.value=freq;g.gain.value=vol;
+  s.connect(f).connect(g).connect(a.destination);s.start(t);
+}
+const SFX={
+  clique:()=>tom(700,900,.05,'square',.04),
+  pos:()=>tom(380,620,.08,'triangle',.1),
+  erro:()=>tom(180,120,.12,'square',.06),
+  tiro:()=>{tom(1100,180,.22,'sawtooth',.06);ruido(.12,.08,3000)},
+  agua:()=>{ruido(.35,.18,700);tom(320,160,.3,'sine',.06)},
+  acerto:()=>{ruido(.45,.4,1400);tom(140,40,.4,'sine',.3)},
+  afundou:()=>{ruido(.9,.45,900);tom(220,40,.9,'sawtooth',.12);tom(90,30,.8,'sine',.3,.1)},
+  vez:()=>{tom(660,660,.08,'sine',.08);tom(990,990,.12,'sine',.08,.09)},
+  vitoria:()=>[523,659,784,1047].forEach((f,i)=>tom(f,f,.22,'triangle',.12,i*.12)),
+  derrota:()=>[392,330,262].forEach((f,i)=>tom(f,f*.97,.3,'triangle',.1,i*.18)),
+  conectou:()=>[440,660,880].forEach((f,i)=>tom(f,f,.12,'sine',.1,i*.08)),
+};
+const vibra=p=>{if(TOQUE&&navigator.vibrate)try{navigator.vibrate(p)}catch(e){}};
+function somUI(){
+  const b=$('bSom');
+  b.innerHTML=mudo
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="m22 9-6 6M16 9l6 6"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+  b.setAttribute('aria-label',mudo?'Ligar som':'Desligar som');b.setAttribute('aria-pressed',mudo);
+}
+
+/* ---------- Interface geral ---------- */
+function mostra(id){for(const t of document.querySelectorAll('.tela'))t.hidden=t.id!==id;document.body.classList.toggle('no-menu',id==='tMenu');window.scrollTo(0,0)}
+let toastT=0;
+function toast(msg,ruim){const t=$('toast');t.textContent=msg;t.classList.toggle('ruim',!!ruim);t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2800)}
+function emojiVoa(e,deMim){
+  const s=document.createElement('span');s.className='emoji-voa';s.textContent=e;
+  s.style.left=(deMim?35:65)+'%';s.style.top='45%';document.body.append(s);setTimeout(()=>s.remove(),1900);
+}
+const linkSala=()=>/^https?:$/.test(location.protocol)?`${location.origin}${location.pathname}#${codigo}`:`#${codigo}`;
+const geraCodigo=()=>Array.from({length:5},()=>ALFA[Math.random()*ALFA.length|0]).join('');
+// Mantém só os caracteres que existem nos códigos (o alfabeto não tem 0, 1, I, L nem O).
+const limpaCodigo=v=>[...v.toUpperCase()].filter(c=>ALFA.includes(c)).join('').slice(0,5);
+
+/* ---------- Tabuleiros ---------- */
+function montaTab(el,aoClicar,aoPassar){
+  el.textContent='';
+  el.append(Object.assign(document.createElement('span'),{className:'rot col'}));
+  for(let x=0;x<N;x++){const r=document.createElement('span');r.className='rot col';r.textContent=x+1;r.setAttribute('aria-hidden','true');el.append(r)}
+  for(let y=0;y<N;y++){
+    const r=document.createElement('span');r.className='rot';r.textContent=LETRAS[y];r.setAttribute('aria-hidden','true');el.append(r);
+    for(let x=0;x<N;x++){
+      const b=document.createElement('button');b.className='cel';b.dataset.x=x;b.dataset.y=y;b.type='button';
+      b.setAttribute('aria-label',coord(x,y));
+      if(aoClicar)b.onclick=()=>aoClicar(x,y);
+      if(aoPassar){b.onpointerenter=e=>{if(e.pointerType==='mouse')aoPassar(x,y)}}
+      el.append(b);
+    }
+  }
+  if(aoPassar)el.onpointerleave=()=>aoPassar(-1,-1);
+}
+const celEl=(el,x,y)=>el.querySelector(`.cel[data-x="${x}"][data-y="${y}"]`);
+// Marca as casas de uma nave com as classes de segmento (início, fim, orientação).
+function desenhaNave(el,cel,extra){
+  const h=cel.length<2||cel[0][1]===cel[1][1];
+  cel.forEach(([x,y],i)=>{const c=celEl(el,x,y);if(!c)return;c.classList.add('nav',h?'h':'v');if(i===0)c.classList.add('ini');if(i===cel.length-1)c.classList.add('fim');if(extra)c.classList.add(extra)});
+}
+function limpaTab(el){for(const c of el.querySelectorAll('.cel')){c.className='cel';c.setAttribute('aria-label',coord(+c.dataset.x,+c.dataset.y))}}
+
+/* ---------- Posicionamento ---------- */
+function posUI(prev){
+  const el=$('tabPos');limpaTab(el);
+  minha.navios.forEach(n=>{if(n.pos){desenhaNave(el,celulas(n));for(const[x,y]of celulas(n))celEl(el,x,y).setAttribute('aria-label',`${coord(x,y)}: ${n.nome}`)}});
+  if(prev&&sel!=null&&!euPronto){
+    const n=minha.navios[sel];let{x,y}=prev;
+    if(horiz)x=Math.min(x,N-n.t);else y=Math.min(y,N-n.t);
+    const ok=cabe(minha.navios,sel,x,y,horiz);
+    for(let k=0;k<n.t;k++){const c=celEl(el,horiz?x+k:x,horiz?y:y+k);if(c)c.classList.add('prev',ok?'ok':'ruim')}
+  }
+  const hg=$('hangar');hg.textContent='';
+  minha.navios.forEach((n,i)=>{
+    const b=document.createElement('button');b.type='button';b.disabled=euPronto;
+    b.setAttribute('aria-pressed',i===sel);if(n.pos)b.classList.add('posto');
+    const bl=document.createElement('span');bl.className='blocos';for(let k=0;k<n.t;k++)bl.append(document.createElement('i'));
+    b.append(bl,n.nome);b.setAttribute('aria-label',`${n.nome}, ${n.t} casas${n.pos?', posicionada':''}`);
+    b.onclick=()=>{if(euPronto)return;SFX.clique();if(n.pos){n.pos=false}sel=i;horiz=n.h;posUI()};
+    hg.append(b);
+  });
+  const todas=minha.navios.every(n=>n.pos);
+  $('bPronto').disabled=!todas&&!euPronto;
+  $('bPronto').textContent=euPronto?'Alterar posição':'Estou pronto';
+  $('bGirar').textContent=`Girar (${horiz?'horizontal':'vertical'})`;
+  for(const id of['bGirar','bAleatorio','bLimpar'])$(id).disabled=euPronto;
+  const ea=$('estadoAdv');ea.classList.toggle('pronto',advPronto);
+  ea.querySelector('span').textContent=advPronto?`${nomeAdv} está pronto`:`${nomeAdv} está posicionando a frota…`;
+  $('dicaPos').textContent=euPronto?(advPronto?'Começando…':`Esperando ${nomeAdv} terminar.`)
+    :todas?'Tudo posicionado. Ajuste se quiser e toque em “Estou pronto”.'
+    :`Escolha uma nave e toque no setor para colocá-la${TOQUE?'':' (R gira)'}. Toque numa nave posicionada para tirá-la de lugar.`;
+}
+function cliquePos(x,y){
+  if(euPronto)return;
+  const g=grade(minha.navios),k=g[y][x];
+  if(k>=0){const n=minha.navios[k];n.pos=false;sel=k;horiz=n.h;SFX.clique();posUI({x,y});return}
+  if(sel==null){toast('Escolha uma nave no hangar abaixo do setor.');return}
+  const n=minha.navios[sel];
+  if(horiz)x=Math.min(x,N-n.t);else y=Math.min(y,N-n.t);
+  if(!cabe(minha.navios,sel,x,y,horiz)){SFX.erro();vibra(30);toast('Não cabe aí: esbarra em outra nave.',true);return}
+  Object.assign(n,{x,y,h:horiz,pos:true});SFX.pos();vibra(15);
+  const prox=minha.navios.findIndex(m=>!m.pos);sel=prox<0?null:prox;if(sel!=null)horiz=minha.navios[sel].h;
+  posUI();
+}
+function aleatorio(){
+  // Tenta deixar um espaço entre as naves; se não der, aceita encostar.
+  for(let tent=0;tent<400;tent++){
+    const nav=minha.navios.map(n=>({...n,pos:false}));let ok=true;
+    for(let i=0;i<nav.length&&ok;i++){
+      let colocou=false;
+      for(let k=0;k<200&&!colocou;k++){
+        const h=Math.random()<.5,x=Math.random()*(h?N-nav[i].t+1:N)|0,y=Math.random()*(h?N:N-nav[i].t+1)|0;
+        if(!cabe(nav,i,x,y,h))continue;
+        if(tent<300){const g=grade(nav);let encosta=false;
+          for(let q=0;q<nav[i].t&&!encosta;q++){const cx=h?x+q:x,cy=h?y:y+q;
+            for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const ax=cx+dx,ay=cy+dy;if(ax>=0&&ay>=0&&ax<N&&ay<N&&g[ay][ax]>=0)encosta=true}}
+          if(encosta)continue}
+        Object.assign(nav[i],{x,y,h,pos:true});colocou=true;
+      }
+      if(!colocou)ok=false;
+    }
+    if(ok){minha.navios=nav;sel=null;return}
+  }
+}
+
+/* ---------- Batalha ---------- */
+function vivas(navios){return navios.filter(n=>n.acertos<n.t).length}
+function batalhaUI(){
+  $('nEu').textContent=nome||'Você';$('nAdv').textContent=nomeAdv;
+  $('sEu').textContent=`${vivas(minha.navios)}/5`;$('sAdv').textContent=`${5-inim.afundados.length}/5`;
+  $('jEu').setAttribute('aria-label',`${nome||'Você'}: ${vivas(minha.navios)} de 5 naves`);
+  $('jAdv').setAttribute('aria-label',`${nomeAdv}: ${5-inim.afundados.length} de 5 naves`);
+  const jogando=fase==='batalha';
+  $('jEu').classList.toggle('vez',jogando&&meuTurno);$('jAdv').classList.toggle('vez',jogando&&!meuTurno);
+  const tu=$('turno');
+  if(jogando){tu.textContent=meuTurno?'Sua vez':`Vez de ${nomeAdv}`;tu.className='turno '+(meuTurno?'minha':'dele')}
+  else{tu.textContent='';tu.className='turno'}
+  $('tabAlvo').classList.toggle('minha-vez',jogando&&meuTurno&&!aguardando);
+  $('tituloAlvo').textContent=`Setor de ${nomeAdv}`;
+  // Setor inimigo
+  const A=$('tabAlvo');limpaTab(A);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const v=inim.tiros[y][x];if(!v)continue;const c=celEl(A,x,y);
+    c.classList.add(v===1?'agua':v===2?'fogo':'afund');
+    c.setAttribute('aria-label',`${coord(x,y)}: ${v===1?'água':v===2?'acerto':'afundada'}`);
+  }
+  for(const a of inim.afundados)desenhaNave(A,a.cel,'afund');
+  if(inim.revelado)for(const n of inim.revelado)if(!inim.afundados.some(a=>a.id===n.id))desenhaNave(A,n.cel,'rev');
+  // Minha frota
+  const M=$('tabMeu');limpaTab(M);
+  for(const n of minha.navios)desenhaNave(M,celulas(n),n.acertos>=n.t?'afund':null);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const v=minha.rec[y][x];if(!v)continue;const c=celEl(M,x,y);c.classList.add(v===1?'agua':'fogo');
+    c.setAttribute('aria-label',`${coord(x,y)}: ${v===1?'água':'atingida'}`);
+  }
+  for(const c of M.querySelectorAll('.cel'))c.tabIndex=-1;
+  // Listas de frota
+  const fa=$('frotaAdv');fa.textContent='';
+  for(const f of FROTA){const fora=inim.afundados.some(a=>a.id===f.id);fa.append(itemFrota(f.nome,f.t,fora?f.t:0,fora))}
+  const fe=$('frotaEu');fe.textContent='';
+  for(const n of minha.navios)fe.append(itemFrota(n.nome,n.t,n.acertos,n.acertos>=n.t));
+  for(const b of $('reacoes').children)b.disabled=!(conn&&conn.open);
+}
+function itemFrota(nm,t,ac,fora){
+  const s=document.createElement('span');if(fora)s.classList.add('fora');
+  const bl=document.createElement('span');bl.className='blocos';
+  for(let k=0;k<t;k++){const i=document.createElement('i');if(k<ac&&!fora)i.className='x';bl.append(i)}
+  s.append(bl,nm);return s;
+}
+function info(txt,tipo){const el=$('info');el.textContent=txt;el.className='info'+(tipo?' '+tipo:'')}
+function marcaNovo(el,x,y){const c=celEl(el,x,y);if(c){c.classList.add('novo');setTimeout(()=>c.classList.remove('novo'),600)}}
+function treme(el){el.classList.remove('treme');void el.offsetWidth;el.classList.add('treme')}
+
+function disparo(x,y){
+  if(fase!=='batalha')return;
+  if(!meuTurno){toast(`Aguarde: é a vez de ${nomeAdv}.`);return}
+  if(aguardando||inim.tiros[y][x])return;
+  aguardando=true;stats.tiros++;
+  envia({t:'tiro',x,y});SFX.tiro();vibra(10);
+  batalhaUI();celEl($('tabAlvo'),x,y).classList.add('mirando');
+  info(`Disparando em ${coord(x,y)}…`);
+}
+function recebeTiro(x,y){
+  if(fase!=='batalha'||meuTurno)return;
+  if(!(x>=0&&y>=0&&x<N&&y<N))return;
+  if(minha.rec[y][x]){// tiro repetido (mensagem duplicada): responde de novo sem contar
+    envia({t:'res',x,y,acerto:minha.rec[y][x]===2,afundou:null,fim:false,dup:true});return}
+  const g=grade(minha.navios),k=g[y][x],acerto=k>=0;
+  minha.rec[y][x]=acerto?2:1;
+  let afundou=null;
+  if(acerto){const n=minha.navios[k];n.acertos++;if(n.acertos>=n.t)afundou={id:n.id,cel:celulas(n)}}
+  const fim=vivas(minha.navios)===0;
+  envia({t:'res',x,y,acerto,afundou,fim});
+  meuTurno=!acerto;
+  batalhaUI();marcaNovo($('tabMeu'),x,y);
+  if(afundou){SFX.afundou();vibra([60,40,60,40,160]);treme($('tabMeu'));info(`${nomeAdv} afundou sua ${NOME_DE[afundou.id]}!`,'ruim')}
+  else if(acerto){SFX.acerto();vibra([50,30,90]);treme($('tabMeu'));info(`${nomeAdv} acertou sua frota em ${coord(x,y)}. Ele atira de novo.`,'ruim')}
+  else{SFX.agua();info(`${nomeAdv} errou em ${coord(x,y)}. Sua vez!`);setTimeout(()=>{if(meuTurno&&fase==='batalha')SFX.vez()},350);vibra(20)}
+  if(fim)terminar(false);
+}
+function recebeResultado(m){
+  if(fase!=='batalha'||!aguardando)return;
+  const{x,y,acerto,afundou,fim}=m;aguardando=false;
+  inim.tiros[y][x]=acerto?2:1;
+  if(acerto){stats.acertos++;stats.seq++;stats.maiorSeq=Math.max(stats.maiorSeq,stats.seq)}else stats.seq=0;
+  if(afundou&&Array.isArray(afundou.cel)){
+    inim.afundados.push({id:afundou.id,cel:afundou.cel});
+    for(const[cx,cy]of afundou.cel)if(cy>=0&&cy<N&&cx>=0&&cx<N)inim.tiros[cy][cx]=3;
+  }
+  meuTurno=!!acerto;
+  batalhaUI();marcaNovo($('tabAlvo'),x,y);
+  if(afundou){SFX.afundou();vibra([40,30,120]);treme($('tabAlvo'));info(`Você afundou a ${NOME_DE[afundou.id]} de ${nomeAdv}! Atire de novo.`,'bom')}
+  else if(acerto){SFX.acerto();vibra(40);info(`Acertou em ${coord(x,y)}! Atire de novo.`,'bom')}
+  else{SFX.agua();info(`Água em ${coord(x,y)}. Vez de ${nomeAdv}.`)}
+  if(fim)terminar(true);
+}
+function comeca(primeiro){
+  fase='batalha';meuTurno=(primeiro==='host')===souHost;aguardando=false;
+  montaTab($('tabAlvo'),disparo);montaTab($('tabMeu'));
+  $('painelFim').hidden=true;mostra('tBatalha');batalhaUI();
+  info(meuTurno?'Você começa. Toque numa casa do setor inimigo.':`${nomeAdv} começa. Prepare-se.`);
+  SFX.conectou();if(meuTurno)setTimeout(SFX.vez,400);
+}
+function terminar(venceu){
+  fase='fim';aguardando=false;
+  if(venceu)vitorias++;else derrotas++;
+  if(souHost)primeiroProx=venceu?'conv':'host';     // quem perdeu começa a revanche
+  envia({t:'revela',navios:minha.navios.map(n=>({id:n.id,cel:celulas(n)}))});
+  setTimeout(()=>{venceu?SFX.vitoria():SFX.derrota()},500);vibra(venceu?[40,40,40,40,200]:[200,80,300]);
+  const h=$('fimTitulo');h.textContent=venceu?'Vitória!':'Derrota';h.className=venceu?'venceu':'perdeu';
+  $('fimSub').textContent=venceu?`Você afundou a frota inteira de ${nomeAdv}.`:`${nomeAdv} afundou a sua frota. As naves dele que sobraram aparecem em âmbar.`;
+  const prec=stats.tiros?Math.round(100*stats.acertos/stats.tiros):0;
+  const st=$('fimStats');st.textContent='';
+  for(const[v,l]of[[stats.tiros,'Disparos'],[prec+'%','Precisão'],[stats.maiorSeq,'Maior sequência']]){
+    const d=document.createElement('div'),s=document.createElement('strong'),sp=document.createElement('span');s.textContent=v;sp.textContent=l;d.append(s,sp);st.append(d);
+  }
+  $('placarSerie').textContent=`Placar nesta sala: ${nome||'Você'} ${vitorias} × ${derrotas} ${nomeAdv}`;
+  revEu=false;atualizaRevanche();
+  $('painelFim').hidden=false;batalhaUI();
+  info(venceu?'Missão cumprida.':'Sua frota foi destruída.',venceu?'bom':'ruim');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function atualizaRevanche(){
+  const b=$('bRevanche');
+  b.disabled=revEu||!(conn&&conn.open);
+  b.textContent=revEu?`Esperando ${nomeAdv} aceitar…`:revAdv?'Aceitar revanche':'Pedir revanche';
+}
+function iniciaRevanche(){
+  novoEstado(true);fase='posicionar';montaTab($('tabPos'),cliquePos,(x,y)=>posUI(x<0?null:{x,y}));
+  mostra('tPos');posUI();toast('Revanche! Posicione sua frota de novo ou mantenha a anterior.');
+}
+
+/* ---------- Rede ---------- */
+function envia(m){if(conn&&conn.open)try{conn.send(m)}catch(e){}}
+function encerraRede(){
+  clearTimeout(timerCon);
+  try{if(conn)conn.close()}catch(e){}
+  try{if(peer)peer.destroy()}catch(e){}
+  conn=null;peer=null;
+}
+function erroRede(err){
+  const t=err&&err.type;
+  if(fase==='espera'&&t==='unavailable-id'){criarSala();return}   // código já em uso: gera outro
+  const msgs={
+    'peer-unavailable':'Sala não encontrada. Confira o código ou peça um link novo.',
+    'browser-incompatible':'Seu navegador não suporta conexão direta. Tente o Chrome ou o Safari atualizados.',
+    'network':'Sem conexão com o servidor. Verifique sua internet.',
+    'server-error':'O servidor de conexão não respondeu. Tente de novo em instantes.',
+    'socket-error':'O servidor de conexão não respondeu. Tente de novo em instantes.',
+    'socket-closed':'O servidor de conexão fechou. Tente de novo.',
+    'webrtc':'A conexão direta falhou. Algumas redes bloqueiam esse tipo de conexão: tente trocar de Wi-Fi para dados móveis.',
+  };
+  const msg=msgs[t]||'Não foi possível conectar. Tente de novo.';
+  if(fase==='espera'||fase==='conectando'){encerraRede();voltaMenu();toast(msg,true)}
+  else if(fase==='posicionar'||fase==='batalha'||fase==='fim'){if(t==='network'||t==='webrtc')caiu(msg)}
+}
+function ligaConexao(c){
+  conn=c;
+  c.on('open',()=>{ultimaMsg=Date.now();envia({t:'ola',nome:nome||'Piloto',proto:PROTO,versao:VERSAO})});
+  c.on('data',recebe);
+  c.on('close',()=>{if(conn===c)caiu()});
+  c.on('error',()=>{if(conn===c)caiu()});
+}
+function criarSala(){
+  if(typeof Peer==='undefined'){toast('Não foi possível carregar o módulo de conexão. Verifique a internet e recarregue.',true);return}
+  encerraRede();souHost=true;codigo=geraCodigo();fase='espera';
+  $('codigoSala').textContent=codigo;$('linkSala').textContent=linkSala();
+  $('esperaTxt').textContent='Abrindo canal de comunicação…';
+  $('bCompartilhar').hidden=!navigator.share;
+  mostra('tEspera');
+  peer=new Peer(PREFIXO+codigo,{debug:0});
+  peer.on('open',()=>{$('esperaTxt').textContent='Aguardando o adversário entrar…'});
+  peer.on('connection',c=>{
+    if(conn&&conn.open){c.on('open',()=>{try{c.send({t:'cheia'})}catch(e){}setTimeout(()=>c.close(),400)});return}
+    ligaConexao(c);
+  });
+  peer.on('disconnected',()=>{try{if(peer&&!peer.destroyed)peer.reconnect()}catch(e){}});
+  peer.on('error',erroRede);
+}
+function entrarSala(cod){
+  cod=limpaCodigo(cod||'');
+  if(cod.length!==5){toast('O código tem 5 caracteres.',true);$('iCodigo').focus();return}
+  if(typeof Peer==='undefined'){toast('Não foi possível carregar o módulo de conexão. Verifique a internet e recarregue.',true);return}
+  encerraRede();souHost=false;codigo=cod;fase='conectando';
+  $('conTitulo').textContent=`Entrando na sala ${cod}`;$('conTxt').textContent='Procurando o anfitrião…';
+  mostra('tConectando');
+  peer=new Peer({debug:0});
+  peer.on('open',()=>{$('conTxt').textContent='Estabelecendo conexão direta com o anfitrião…';ligaConexao(peer.connect(PREFIXO+cod,{reliable:true}))});
+  peer.on('disconnected',()=>{try{if(peer&&!peer.destroyed)peer.reconnect()}catch(e){}});
+  peer.on('error',erroRede);
+  timerCon=setTimeout(()=>{if(fase==='conectando'){encerraRede();voltaMenu();toast('Demorou demais para conectar. Confira o código e se o seu amigo está com a sala aberta.',true)}},20000);
+}
+function recebe(m){
+  if(!m||typeof m!=='object')return;
+  ultimaMsg=Date.now();$('info').dataset.lento='';
+  switch(m.t){
+    case 'ola':
+      clearTimeout(timerCon);
+      nomeAdv=String(m.nome||'Adversário').slice(0,16)||'Adversário';
+      if(m.proto!==PROTO){caiu(`Vocês estão com versões diferentes do jogo (${VERSAO} e ${m.versao||'?'}). Recarreguem a página.`);return}
+      if(fase==='espera'||fase==='conectando'){
+        vitorias=derrotas=0;primeiroProx=null;
+        novoEstado(false);fase='posicionar';
+        montaTab($('tabPos'),cliquePos,(x,y)=>posUI(x<0?null:{x,y}));
+        mostra('tPos');posUI();SFX.conectou();vibra([30,40,30]);
+        toast(`${nomeAdv} entrou na sala!`);
+        if(souHost)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+      }
+      break;
+    case 'cheia':caiu('Essa sala já está cheia: a partida começou com outra pessoa.');break;
+    case 'pronto':advPronto=true;if(fase==='posicionar'){posUI();if(!euPronto)toast(`${nomeAdv} já está pronto.`)}tentaIniciar();break;
+    case 'despronto':advPronto=false;if(fase==='posicionar')posUI();break;
+    case 'inicio':if(!souHost&&fase==='posicionar'&&euPronto)comeca(m.primeiro);break;
+    case 'tiro':recebeTiro(m.x|0,m.y|0);break;
+    case 'res':if(!m.dup)recebeResultado(m);break;
+    case 'revela':if(Array.isArray(m.navios)){inim.revelado=m.navios.filter(n=>Array.isArray(n.cel));if(fase==='fim')batalhaUI()}break;
+    case 'revanche':
+      revAdv=true;
+      if(fase==='fim'){atualizaRevanche();if(revEu)iniciaRevanche();else{toast(`${nomeAdv} quer revanche!`);SFX.vez()}}
+      break;
+    case 'emo':if(REACOES.includes(m.e))emojiVoa(m.e,false);break;
+    case 'ping':envia({t:'pong'});break;
+  }
+}
+function tentaIniciar(){
+  if(!souHost||fase!=='posicionar'||!euPronto||!advPronto)return;
+  const p=primeiroProx||(Math.random()<.5?'host':'conv');
+  envia({t:'inicio',primeiro:p});comeca(p);
+}
+function caiu(msg){
+  if(fase==='menu'||fase==='caiu')return;
+  const em=fase;fase='caiu';encerraRede();
+  $('caiuTxt').textContent=msg||(em==='espera'||em==='conectando'?'Não foi possível manter a conexão.':`A conexão com ${nomeAdv} caiu. Isso acontece se um de vocês fechar o navegador, trocar de app por muito tempo ou perder a internet.`);
+  mostra('tCaiu');SFX.derrota();
+}
+function voltaMenu(){
+  encerraRede();fase='menu';mostra('tMenu');
+  try{if(location.hash)history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  $('convite').hidden=true;
+}
+// Mantém a conexão acordada e avisa quando o outro some.
+setInterval(()=>{
+  if(!(conn&&conn.open)||!['posicionar','batalha','fim'].includes(fase))return;
+  envia({t:'ping'});
+  if(Date.now()-ultimaMsg>15000&&!$('info').dataset.lento){$('info').dataset.lento='1';toast(`Sem resposta de ${nomeAdv}… a conexão pode estar instável.`,true)}
+},4000);
+
+/* ---------- Eventos ---------- */
+$('iNome').oninput=e=>{nome=e.target.value.trim();try{localStorage.setItem('be-nome',nome)}catch(err){}};
+$('iCodigo').oninput=e=>{const v=limpaCodigo(e.target.value);if(e.target.value!==v)e.target.value=v};
+$('iCodigo').onkeydown=e=>{if(e.key==='Enter')entrarSala($('iCodigo').value)};
+$('bCriar').onclick=()=>{audio();SFX.clique();criarSala()};
+$('bEntrar').onclick=()=>{audio();SFX.clique();entrarSala($('iCodigo').value)};
+$('bCancelar').onclick=$('bCancelar2').onclick=()=>{SFX.clique();voltaMenu()};
+$('bVoltar').onclick=()=>{SFX.clique();voltaMenu()};
+$('bSair').onclick=()=>{SFX.clique();voltaMenu()};
+const textoConvite=()=>`Bora uma Batalha Espacial? Entra na minha sala: ${linkSala()} (código ${codigo})`;
+$('bCopiar').onclick=async()=>{try{await navigator.clipboard.writeText(linkSala());toast('Link copiado!')}catch(e){toast(`Código da sala: ${codigo}`)}};
+$('bCompartilhar').onclick=async()=>{try{await navigator.share({title:'Batalha Espacial',text:textoConvite(),url:linkSala()})}catch(e){}};
+$('bWhats').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(textoConvite()),'_blank','noopener');
+$('bGirar').onclick=()=>{horiz=!horiz;SFX.clique();posUI()};
+$('bAleatorio').onclick=()=>{aleatorio();SFX.pos();posUI()};
+$('bLimpar').onclick=()=>{minha.navios.forEach(n=>n.pos=false);sel=0;horiz=true;SFX.clique();posUI()};
+$('bPronto').onclick=()=>{
+  if(fase!=='posicionar')return;
+  if(euPronto){euPronto=false;envia({t:'despronto'});SFX.clique();posUI();return}
+  if(!minha.navios.every(n=>n.pos))return;
+  euPronto=true;sel=null;envia({t:'pronto'});SFX.pos();posUI();tentaIniciar();
+};
+$('bRevanche').onclick=()=>{
+  if(fase!=='fim'||revEu)return;
+  revEu=true;envia({t:'revanche'});SFX.clique();atualizaRevanche();
+  if(revAdv)iniciaRevanche();
+};
+$('bSom').onclick=()=>{mudo=!mudo;try{localStorage.setItem('be-mudo',mudo?'1':'0')}catch(e){}somUI();if(!mudo)SFX.clique()};
+REACOES.forEach(e=>{
+  const b=document.createElement('button');b.type='button';b.textContent=e;b.setAttribute('aria-label',`Enviar reação ${e}`);
+  b.onclick=()=>{const agora=Date.now();if(agora-ultimaReacao<900)return;ultimaReacao=agora;envia({t:'emo',e});emojiVoa(e,true)};
+  $('reacoes').append(b);
+});
+document.addEventListener('keydown',e=>{
+  if(fase==='posicionar'&&(e.key==='r'||e.key==='R')&&document.activeElement.tagName!=='INPUT'){horiz=!horiz;posUI()}
+});
+$('tabPos').addEventListener('contextmenu',e=>{if(fase==='posicionar'){e.preventDefault();horiz=!horiz;posUI()}});
+window.addEventListener('beforeunload',e=>{if(['batalha','posicionar'].includes(fase)){e.preventDefault();e.returnValue=''}});
+window.addEventListener('pagehide',()=>{try{if(conn)conn.close()}catch(e){}});
+window.addEventListener('resize',()=>{clearTimeout(window.__rc);window.__rc=setTimeout(pintaCeu,200)});
+
+/* ---------- Início ---------- */
+try{nome=localStorage.getItem('be-nome')||'';mudo=localStorage.getItem('be-mudo')==='1'}catch(e){}
+$('iNome').value=nome;
+$('marcaInsta').textContent=INSTA;$('marcaVersao').textContent=VERSAO;
+pintaCeu();somUI();novoEstado(false);mostra('tMenu');
+// Link de convite: endereço#CODIGO
+(()=>{
+  const m=location.hash.match(/^#([A-Za-z0-9]{5})$/);if(!m)return;
+  const cod=limpaCodigo(m[1]);$('iCodigo').value=cod;
+  const cv=$('convite');cv.textContent=`Você foi convidado para a sala ${cod}. Coloque seu nome e toque em Entrar.`;cv.hidden=false;
+  $('bEntrar').classList.replace('secundario','primario');
+})();
+</script>
+</body>
+</html>
